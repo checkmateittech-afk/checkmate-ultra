@@ -1,0 +1,68 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #fff4ec;
+  --color-brand-100: #ffe3d0;
+  --color-brand-200: #ffc4a1;
+  --color-brand-300: #ff9d6a;
+  --color-brand-400: #fb7a3c;
+  --color-brand-500: #f2620f;
+  --color-brand-600: #d94f08;
+  --color-brand-700: #b43e09;
+  --color-brand-800: #8f330f;
+  --color-brand-900: #74300f;
+
+  --color-navy-600: #24466f;
+  --color-navy-700: #1f3a5f;
+  --color-navy-800: #182c48;
+  --color-navy-900: #132238;
+
+  --color-ink: #1b2333;
+  --color-muted: #5b6472;
+  --color-line: #e5e7eb;
+  --color-surface: #ffffff;
+  --color-canvas: #f5f6f8;
+  --color-star: #f5a623;
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
+  ::selection {
+    background: var(--color-brand-500);
+    color: #fff;
+  }
+  a {
+    color: inherit;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+}
+
+.container-page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding-inline: 1rem;
+}
+@media (min-width: 640px) {
+  .container-page {
+    padding-inline: 1.5rem;
+  }
+}

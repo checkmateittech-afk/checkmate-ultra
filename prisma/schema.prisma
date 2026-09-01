@@ -1,0 +1,122 @@
+// Checkmate Ultra — data model (module 1: public directory & search)
+// SQLite for zero-infra local dev. Shape is Postgres-compatible:
+// no scalar arrays, no native enums (status/role kept as String + app-level unions).
+// To move to Postgres: set provider = "postgresql", update DATABASE_URL, run db:push + db:seed.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        String            @id @default(cuid())
+  slug      String            @unique
+  name      String
+  icon      String            // lucide icon key, see src/lib/catalog.ts
+  blurb     String
+  sortOrder Int               @default(0)
+  services  ProviderService[]
+  createdAt DateTime          @default(now())
+}
+
+model City {
+  id         String     @id @default(cuid())
+  slug       String     @unique
+  name       String
+  state      String
+  localities Locality[]
+  providers  Provider[]
+  createdAt  DateTime   @default(now())
+}
+
+model Locality {
+  id        String     @id @default(cuid())
+  slug      String
+  name      String
+  cityId    String
+  city      City       @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  providers Provider[]
+
+  @@unique([cityId, slug])
+}
+
+model Provider {
+  id              String            @id @default(cuid())
+  slug            String            @unique
+  name            String
+  about           String
+  phone           String
+  email           String?
+  verified        Boolean           @default(false)
+  yearsInBusiness Int               @default(1)
+  ratingAvg       Float             @default(0)
+  ratingCount     Int               @default(0)
+  addressLine     String
+  cityId          String
+  city            City              @relation(fields: [cityId], references: [id])
+  localityId      String
+  locality        Locality          @relation(fields: [localityId], references: [id])
+  services        ProviderService[]
+  reviews         Review[]
+  photos          ProviderPhoto[]
+  createdAt       DateTime          @default(now())
+
+  @@index([cityId])
+  @@index([localityId])
+}
+
+model ProviderService {
+  id         String   @id @default(cuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  priceFrom  Int?
+  priceUnit  String?  // "per visit", "per hour", "per sq ft", "per room"
+
+  @@unique([providerId, categoryId])
+  @@index([categoryId])
+}
+
+model ProviderPhoto {
+  id         String   @id @default(cuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  label      String
+  tint       String   // hex seed for the CSS gradient tile
+  sortOrder  Int      @default(0)
+}
+
+model Review {
+  id         String   @id @default(cuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  authorName String
+  rating     Int
+  title      String
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@index([providerId])
+}
+
+model LeadRequest {
+  id           String   @id @default(cuid())
+  name         String
+  phone        String
+  email        String?
+  message      String
+  categorySlug String?
+  citySlug     String?
+  providerId   String?
+  source       String   @default("web")
+  status       String   @default("NEW")
+  createdAt    DateTime @default(now())
+
+  @@index([status])
+  @@index([createdAt])
+}
