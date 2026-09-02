@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { leadSchema } from "@/lib/validation";
+import { getSessionUser } from "@/lib/auth";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -22,6 +23,7 @@ export async function POST(req: Request) {
   }
 
   const { name, phone, email, message, categorySlug, citySlug, providerId } = parsed.data;
+  const session = await getSessionUser();
 
   const lead = await db.leadRequest.create({
     data: {
@@ -32,6 +34,7 @@ export async function POST(req: Request) {
       categorySlug: categorySlug || null,
       citySlug: citySlug || null,
       providerId: providerId || null,
+      userId: session?.id ?? null,
       source: "web",
     },
     select: { id: true, createdAt: true },

@@ -50,8 +50,24 @@ npm run dev           # http://localhost:3000
 - API route handlers: `GET /api/providers`, `POST /api/leads` (+ `GET /api/leads`)
 - City selection persisted in a cookie (`ck_city`)
 
-Auth, provider onboarding/dashboard, reviews collection, billing and the admin
+Provider onboarding/dashboard, reviews collection, billing and the admin
 console are later modules.
+
+## What module 2 covers — Auth
+
+- Phone‑OTP sign in (`/login`): number → 6‑digit code → session. Account is
+  created automatically on first verify. In dev the code is logged to the server
+  and shown on screen (no SMS provider wired yet).
+- Signed session in an httpOnly JWT cookie (`ck_session`, `jose`, HS256, 30d).
+- `middleware.ts` guards `/account` (any user), `/dashboard` (provider/admin),
+  `/admin` (admin/moderator) — redirects to `/login?next=…` or `/account`.
+- `/account` page: edit name/email, view your posted requirements.
+- Header shows a user menu when signed in; enquiries attach `userId` when logged in.
+- API: `POST /api/auth/otp/start`, `POST /api/auth/otp/verify`,
+  `POST /api/auth/logout`, `GET|PATCH /api/auth/me`.
+- Rate limiting on OTP: 30s between sends, 5 per 15 min, 5 verify attempts.
+- Seeded users: `+91 90000 00001` (ADMIN), `+91 90000 00002` (MODERATOR),
+  `+91 98888 00001` (CONSUMER). Set `AUTH_SECRET` in `.env`.
 
 ## Moving to Postgres (later)
 

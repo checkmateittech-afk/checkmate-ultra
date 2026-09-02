@@ -100,6 +100,8 @@ async function main() {
   await db.locality.deleteMany();
   await db.city.deleteMany();
   await db.category.deleteMany();
+  await db.otpChallenge.deleteMany();
+  await db.user.deleteMany();
 
   console.log("Seeding categories…");
   const categoryRows = [];
@@ -195,7 +197,19 @@ async function main() {
     }
   }
 
-  console.log(`Done. ${categoryRows.length} categories, ${cityRows.length} cities, ${total} providers.`);
+  console.log("Seeding users…");
+  await db.user.createMany({
+    data: [
+      { phone: "+919000000001", name: "Checkmate Admin", email: "admin@checkmate.local", role: "ADMIN" },
+      { phone: "+919000000002", name: "Moderator", email: "mod@checkmate.local", role: "MODERATOR" },
+      { phone: "+919888800001", name: "Anita Rao", role: "CONSUMER" },
+    ],
+  });
+
+  console.log(
+    `Done. ${categoryRows.length} categories, ${cityRows.length} cities, ${total} providers, 3 users.`,
+  );
+  console.log("Dev login: use any 10-digit number; the OTP is printed here and shown on the login screen.");
 }
 
 function slugify(s: string) {

@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { CheckCheck } from "lucide-react";
 import { listCities, resolveCitySlug } from "@/lib/queries";
+import { getSessionUser } from "@/lib/auth";
 import { CitySelect } from "./city-select";
 import { SearchBar } from "./search-bar";
+import { UserMenu } from "./user-menu";
 import { buttonVariants } from "@/components/ui/button";
 
 export async function SiteHeader() {
-  const [cities, city] = await Promise.all([listCities(), resolveCitySlug()]);
+  const [cities, city, session] = await Promise.all([
+    listCities(),
+    resolveCitySlug(),
+    getSessionUser(),
+  ]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-surface/95 backdrop-blur">
@@ -35,9 +41,13 @@ export async function SiteHeader() {
           >
             List your business
           </Link>
-          <Link href="/login" className={buttonVariants({ variant: "outline", size: "sm" })}>
-            Login
-          </Link>
+          {session ? (
+            <UserMenu name={session.name} phone={session.phone} role={session.role} />
+          ) : (
+            <Link href="/login" className={buttonVariants({ variant: "outline", size: "sm" })}>
+              Login
+            </Link>
+          )}
           <Link href="/get-quotes" className={buttonVariants({ variant: "primary", size: "sm" })}>
             Post your requirement
           </Link>

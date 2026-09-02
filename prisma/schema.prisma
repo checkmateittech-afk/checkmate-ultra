@@ -113,10 +113,43 @@ model LeadRequest {
   categorySlug String?
   citySlug     String?
   providerId   String?
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
   source       String   @default("web")
   status       String   @default("NEW")
   createdAt    DateTime @default(now())
 
   @@index([status])
   @@index([createdAt])
+  @@index([userId])
+}
+
+/// Roles: CONSUMER | PROVIDER_OWNER | PROVIDER_STAFF | MODERATOR | ADMIN
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  name      String?
+  email     String?  @unique
+  role      String   @default("CONSUMER")
+  status    String   @default("ACTIVE")
+  lastLogin DateTime?
+  createdAt DateTime @default(now())
+
+  leads LeadRequest[]
+
+  @@index([role])
+}
+
+model OtpChallenge {
+  id        String    @id @default(cuid())
+  phone     String
+  codeHash  String
+  purpose   String    @default("login")
+  attempts  Int       @default(0)
+  consumedAt DateTime?
+  expiresAt DateTime
+  ip        String?
+  createdAt DateTime  @default(now())
+
+  @@index([phone, createdAt])
 }
