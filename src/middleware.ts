@@ -33,7 +33,10 @@ export async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.search = `?next=${encodeURIComponent(pathname)}`;
-    return NextResponse.redirect(url);
+    const res = NextResponse.redirect(url);
+    // Drop a present-but-invalid/expired cookie so /login doesn't bounce us back.
+    if (token) res.cookies.set(SESSION_COOKIE, "", { path: "/", maxAge: 0 });
+    return res;
   }
 
   if (guard.roles && !guard.roles.includes(String(payload.role))) {

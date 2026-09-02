@@ -91,7 +91,7 @@ function orderBy(sort: SortValue | undefined): Prisma.ProviderOrderByWithRelatio
 export async function searchProviders(params: ProviderSearch): Promise<ProviderCardData[]> {
   const { q, categorySlug, citySlug, localitySlug, sort, minRating, take = 40 } = params;
 
-  const and: Prisma.ProviderWhereInput[] = [];
+  const and: Prisma.ProviderWhereInput[] = [{ status: "ACTIVE" }];
   if (citySlug) and.push({ city: { slug: citySlug } });
   if (localitySlug) and.push({ locality: { slug: localitySlug } });
   if (categorySlug) and.push({ services: { some: { category: { slug: categorySlug } } } });
@@ -123,7 +123,7 @@ export async function countProviders(params: Omit<ProviderSearch, "sort" | "take
 
 export async function featuredProviders(citySlug: string, take = 6) {
   return db.provider.findMany({
-    where: { city: { slug: citySlug } },
+    where: { status: "ACTIVE", city: { slug: citySlug } },
     orderBy: [{ ratingAvg: "desc" }, { ratingCount: "desc" }],
     take,
     select: providerCardSelect,
@@ -131,8 +131,8 @@ export async function featuredProviders(citySlug: string, take = 6) {
 }
 
 export async function getProvider(slug: string) {
-  return db.provider.findUnique({
-    where: { slug },
+  return db.provider.findFirst({
+    where: { slug, status: "ACTIVE" },
     include: {
       city: true,
       locality: true,
@@ -144,6 +144,40 @@ export async function getProvider(slug: string) {
 }
 
 export type ProviderDetail = NonNullable<Awaited<ReturnType<typeof getProvider>>>;
+
+/** The provider owned by a user (any status) — for the dashboard. */
+export async function getOwnedProvider(userId: string) {
+  return db.provider.findUnique({
+    where: { ownerId: userId },
+    include: {
+      city: true,
+      locality: true,
+      services: { include: { category: true } },
+      kycSubmissions: { orderBy: { createdAt: "desc" }, take: 1 },
+    },
+  });
+}
+
+export async function getProviderLeads(providerId: string) {
+  return db.lead.findMany({
+    where: { providerId },
+    orderBy: { createdAt: "desc" },
+    include: { leadRequest: true },
+  });
+}
+
+export async function providerDashboardStats(providerId: string) {
+  const [total, fresh, won, provider] = await Promise.all([
+    db.lead.count({ where: { providerId } }),
+    db.lead.count({ where: { providerId, status: "NEW" } }),
+    db.lead.count({ where: { providerId, status: "WON" } }),
+    db.provider.findUnique({
+      where: { id: providerId },
+      select: { ratingAvg: true, ratingCount: true, status: true, kycStatus: true, verified: true },
+    }),
+  ]);
+  return { total, fresh, won, provider };
+}
 
 export function ratingBreakdown(reviews: { rating: number }[]) {
   const buckets = [5, 4, 3, 2, 1].map((star) => ({

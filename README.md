@@ -50,8 +50,7 @@ npm run dev           # http://localhost:3000
 - API route handlers: `GET /api/providers`, `POST /api/leads` (+ `GET /api/leads`)
 - City selection persisted in a cookie (`ck_city`)
 
-Provider onboarding/dashboard, reviews collection, billing and the admin
-console are later modules.
+Reviews collection, billing and the admin console are later modules.
 
 ## What module 2 covers — Auth
 
@@ -68,6 +67,22 @@ console are later modules.
 - Rate limiting on OTP: 30s between sends, 5 per 15 min, 5 verify attempts.
 - Seeded users: `+91 90000 00001` (ADMIN), `+91 90000 00002` (MODERATOR),
   `+91 98888 00001` (CONSUMER). Set `AUTH_SECRET` in `.env`.
+
+## What module 3 covers — Provider onboarding & dashboard
+
+- `/business/join`: 3‑step wizard (business details → service & location → review).
+  On submit: creates the Provider (`status = ACTIVE`, self‑serve for now), makes the
+  user a `PROVIDER_OWNER`, seeds a few sample leads.
+- `/dashboard` (guarded): Overview (lead stats, verification banner, recent leads),
+  `/dashboard/leads` (inbox with status + private notes), `/dashboard/profile`
+  (edit details, submit KYC document reference for a Verified badge).
+- Minimal lead distribution: a `POST /api/leads` with a `providerId` goes to that
+  provider; a category+city enquiry fans out to up to 3 matching active providers as
+  `Lead` rows. The full matching + credit engine is a later module.
+- Only `status = ACTIVE` providers appear in public search / profiles.
+- Models added: `Provider.ownerId/status/kycStatus`, `KycSubmission`, `Lead`.
+- API: `POST|PATCH /api/business`, `POST /api/business/verify`,
+  `PATCH /api/dashboard/leads/[id]`.
 
 ## Moving to Postgres (later)
 

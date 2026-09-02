@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CheckCheck } from "lucide-react";
 import { listCities, resolveCitySlug } from "@/lib/queries";
-import { getSessionUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { CitySelect } from "./city-select";
 import { SearchBar } from "./search-bar";
 import { UserMenu } from "./user-menu";
@@ -11,7 +11,7 @@ export async function SiteHeader() {
   const [cities, city, session] = await Promise.all([
     listCities(),
     resolveCitySlug(),
-    getSessionUser(),
+    getCurrentUser(),
   ]);
 
   return (

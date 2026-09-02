@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify, type JWTPayload } from "jose";
 import { db } from "@/lib/db";
@@ -74,14 +75,14 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   return verifySessionToken(token);
 }
 
-/** Full, fresh user record — use when you need current role/status. */
-export async function getCurrentUser() {
+/** Full, fresh user record — use when you need current role/status. Deduped per request. */
+export const getCurrentUser = cache(async () => {
   const session = await getSessionUser();
   if (!session) return null;
   const user = await db.user.findUnique({ where: { id: session.id } });
   if (!user || user.status !== "ACTIVE") return null;
   return user;
-}
+});
 
 export async function requireUser() {
   const user = await getCurrentUser();

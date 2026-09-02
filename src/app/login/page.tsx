@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { getSessionUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -12,8 +12,8 @@ export default async function LoginPage({
   searchParams: Promise<{ next?: string }>;
 }) {
   const { next } = await searchParams;
-  const session = await getSessionUser();
-  if (session) redirect(next || "/account");
+  const user = await getCurrentUser();
+  if (user) redirect(next || "/account");
 
   return (
     <div className="container-page py-12">

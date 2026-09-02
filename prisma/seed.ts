@@ -154,6 +154,7 @@ async function main() {
 
         // 60% single-category providers, 40% also offer one adjacent category
         const extra = rnd() < 0.4 ? pick(categoryRows.filter((c) => c.id !== category.id)) : null;
+        const isVerified = rnd() < 0.6;
 
         await db.provider.create({
           data: {
@@ -162,7 +163,9 @@ async function main() {
             about: ABOUT(category.name, city.name),
             phone: `+91 ${between(70, 99)}${between(10000000, 99999999)}`,
             email: `${slugify(brand)}.${category.slug.split("-")[0]}@example.com`,
-            verified: rnd() < 0.65,
+            verified: isVerified,
+            status: "ACTIVE",
+            kycStatus: isVerified ? "VERIFIED" : "UNVERIFIED",
             yearsInBusiness: between(1, 18),
             ratingAvg,
             ratingCount: nReviews,

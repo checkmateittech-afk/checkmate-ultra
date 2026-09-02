@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db } from "@/lib/db";
 import { leadSchema } from "@/lib/validation";
 import { getSessionUser } from "@/lib/auth";
+import { distributeLeadRequest } from "@/lib/leads";
 
 export async function POST(req: Request) {
   let body: unknown;
@@ -40,7 +41,9 @@ export async function POST(req: Request) {
     select: { id: true, createdAt: true },
   });
 
-  return NextResponse.json({ ok: true, id: lead.id }, { status: 201 });
+  const { delivered } = await distributeLeadRequest(lead.id);
+
+  return NextResponse.json({ ok: true, id: lead.id, delivered }, { status: 201 });
 }
 
 const listQuery = z.object({

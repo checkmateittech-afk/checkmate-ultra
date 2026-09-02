@@ -44,6 +44,8 @@ model Locality {
   @@unique([cityId, slug])
 }
 
+/// status: PENDING | ACTIVE | SUSPENDED | REJECTED
+/// kycStatus: UNVERIFIED | SUBMITTED | VERIFIED | REJECTED
 model Provider {
   id              String            @id @default(cuid())
   slug            String            @unique
@@ -52,10 +54,14 @@ model Provider {
   phone           String
   email           String?
   verified        Boolean           @default(false)
+  status          String            @default("PENDING")
+  kycStatus       String            @default("UNVERIFIED")
   yearsInBusiness Int               @default(1)
   ratingAvg       Float             @default(0)
   ratingCount     Int               @default(0)
   addressLine     String
+  ownerId         String?           @unique
+  owner           User?             @relation(fields: [ownerId], references: [id])
   cityId          String
   city            City              @relation(fields: [cityId], references: [id])
   localityId      String
@@ -63,10 +69,44 @@ model Provider {
   services        ProviderService[]
   reviews         Review[]
   photos          ProviderPhoto[]
+  leads           Lead[]
+  kycSubmissions  KycSubmission[]
   createdAt       DateTime          @default(now())
 
   @@index([cityId])
   @@index([localityId])
+  @@index([status])
+}
+
+model KycSubmission {
+  id         String   @id @default(cuid())
+  providerId String
+  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  docType    String // PAN | GST | AADHAAR | UDYAM
+  docRef     String // reference / masked number (no real doc upload yet)
+  note       String?
+  status     String   @default("SUBMITTED") // SUBMITTED | VERIFIED | REJECTED
+  reviewedBy String?
+  createdAt  DateTime @default(now())
+
+  @@index([providerId])
+  @@index([status])
+}
+
+/// One LeadRequest delivered to one provider. status: NEW | VIEWED | CONTACTED | WON | LOST
+model Lead {
+  id            String      @id @default(cuid())
+  leadRequestId String
+  leadRequest   LeadRequest @relation(fields: [leadRequestId], references: [id], onDelete: Cascade)
+  providerId    String
+  provider      Provider    @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  status        String      @default("NEW")
+  note          String?
+  viewedAt      DateTime?
+  createdAt     DateTime    @default(now())
+
+  @@unique([leadRequestId, providerId])
+  @@index([providerId, status])
 }
 
 model ProviderService {
@@ -115,6 +155,7 @@ model LeadRequest {
   providerId   String?
   userId       String?
   user         User?    @relation(fields: [userId], references: [id])
+  leads        Lead[]
   source       String   @default("web")
   status       String   @default("NEW")
   createdAt    DateTime @default(now())
@@ -135,7 +176,8 @@ model User {
   lastLogin DateTime?
   createdAt DateTime @default(now())
 
-  leads LeadRequest[]
+  leads    LeadRequest[]
+  provider Provider?
 
   @@index([role])
 }
