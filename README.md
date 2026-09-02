@@ -50,7 +50,7 @@ npm run dev           # http://localhost:3000
 - API route handlers: `GET /api/providers`, `POST /api/leads` (+ `GET /api/leads`)
 - City selection persisted in a cookie (`ck_city`)
 
-Reviews collection, billing and the admin console are later modules.
+Billing and the matching/credit engine are later modules.
 
 ## What module 2 covers — Auth
 
@@ -83,6 +83,20 @@ Reviews collection, billing and the admin console are later modules.
 - Models added: `Provider.ownerId/status/kycStatus`, `KycSubmission`, `Lead`.
 - API: `POST|PATCH /api/business`, `POST /api/business/verify`,
   `PATCH /api/dashboard/leads/[id]`.
+
+## What module 4 covers — Reviews & Admin
+
+- Reviews: signed‑in customers write one review per business from the public
+  profile (`POST /api/reviews`); providers reply publicly from
+  `/dashboard/reviews`; `Review.status` (PUBLISHED / PENDING / HIDDEN) and
+  `provider.ratingAvg/ratingCount` are recomputed from PUBLISHED reviews on every
+  change (`lib/reviews.ts`).
+- Admin console at `/admin` (ADMIN / MODERATOR only): overview queues,
+  `/admin/providers` (approve or reject KYC → Verified badge, suspend / reactivate),
+  `/admin/reviews` (hide / publish), `/admin/leads` (read‑only enquiry feed).
+- API: `POST /api/reviews`, `POST /api/dashboard/reviews/[id]/reply`,
+  `PATCH /api/admin/providers/[id]`, `PATCH /api/admin/reviews/[id]`.
+- Sign in as the seeded admin (`+91 90000 00001`) to reach `/admin`.
 
 ## Moving to Postgres (later)
 

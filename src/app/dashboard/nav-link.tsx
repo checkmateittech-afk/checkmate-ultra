@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Inbox, Store, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Inbox, Store, Star, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ICONS: Record<string, LucideIcon> = { LayoutDashboard, Inbox, Store };
+const ICONS: Record<string, LucideIcon> = { LayoutDashboard, Inbox, Store, Star };
 
 export function DashboardNavLink({
   href,

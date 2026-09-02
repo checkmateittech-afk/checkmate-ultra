@@ -58,3 +58,23 @@ export const leadStatusSchema = z.object({
   status: z.enum(["NEW", "VIEWED", "CONTACTED", "WON", "LOST"]).optional(),
   note: z.string().trim().max(500).optional(),
 });
+
+export const reviewSchema = z.object({
+  providerId: z.string().min(1),
+  rating: z.coerce.number().int().min(1, "Pick a rating").max(5),
+  title: z.string().trim().min(4, "Add a short headline").max(120),
+  body: z.string().trim().min(15, "Tell others a bit more (15+ characters)").max(1500),
+});
+
+export const reviewReplySchema = z.object({
+  reply: z.string().trim().min(2, "Write a reply").max(1000),
+});
+
+export const adminProviderSchema = z.object({
+  status: z.enum(["PENDING", "ACTIVE", "SUSPENDED", "REJECTED"]).optional(),
+  kycDecision: z.enum(["VERIFIED", "REJECTED"]).optional(),
+});
+
+export const adminReviewSchema = z.object({
+  status: z.enum(["PUBLISHED", "PENDING", "HIDDEN"]),
+});

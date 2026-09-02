@@ -41,6 +41,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <DashboardNavLink href="/dashboard/leads" iconName="Inbox">
               Leads
             </DashboardNavLink>
+            <DashboardNavLink href="/dashboard/reviews" iconName="Star">
+              Reviews
+            </DashboardNavLink>
             <DashboardNavLink href="/dashboard/profile" iconName="Store">
               Business profile
             </DashboardNavLink>

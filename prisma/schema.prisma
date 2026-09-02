@@ -131,17 +131,24 @@ model ProviderPhoto {
   sortOrder  Int      @default(0)
 }
 
+/// status: PUBLISHED | PENDING | HIDDEN
 model Review {
-  id         String   @id @default(cuid())
-  providerId String
-  provider   Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
-  authorName String
-  rating     Int
-  title      String
-  body       String
-  createdAt  DateTime @default(now())
+  id                String    @id @default(cuid())
+  providerId        String
+  provider          Provider  @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  userId            String?
+  user              User?     @relation(fields: [userId], references: [id])
+  authorName        String
+  rating            Int
+  title             String
+  body              String
+  status            String    @default("PUBLISHED")
+  providerReply     String?
+  providerRepliedAt DateTime?
+  createdAt         DateTime  @default(now())
 
   @@index([providerId])
+  @@index([status])
 }
 
 model LeadRequest {
@@ -178,6 +185,7 @@ model User {
 
   leads    LeadRequest[]
   provider Provider?
+  reviews  Review[]
 
   @@index([role])
 }

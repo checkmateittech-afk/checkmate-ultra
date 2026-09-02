@@ -3,6 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BadgeCheck, MapPin, Briefcase, Phone, Mail } from "lucide-react";
 import { getProvider, ratingBreakdown } from "@/lib/queries";
+import { getCurrentUser } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { categoryIcon } from "@/lib/catalog";
 import { gradientFromSeed, formatPrice, timeAgo, initials } from "@/lib/utils";
 import { Avatar } from "@/components/ui/card";
@@ -10,6 +12,7 @@ import { RatingStars } from "@/components/ui/rating-stars";
 import { Breadcrumbs } from "@/components/site/breadcrumbs";
 import { PhoneReveal } from "@/components/site/phone-reveal";
 import { EnquiryForm } from "@/components/site/enquiry-form";
+import { ReviewForm } from "@/components/site/review-form";
 
 type PP = Promise<{ slug: string }>;
 
@@ -31,6 +34,12 @@ export default async function ProviderPage({ params }: { params: PP }) {
 
   const primaryCat = p.services[0]?.category;
   const breakdown = ratingBreakdown(p.reviews);
+
+  const viewer = await getCurrentUser();
+  const isOwner = viewer?.id === p.ownerId;
+  const alreadyReviewed = viewer
+    ? (await db.review.count({ where: { providerId: p.id, userId: viewer.id } })) > 0
+    : false;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -214,6 +223,23 @@ export default async function ProviderPage({ params }: { params: PP }) {
               </div>
             </div>
 
+            <div className="mt-5 border-t border-line pt-5">
+              {isOwner ? (
+                <p className="text-sm text-muted">You can reply to reviews from your dashboard.</p>
+              ) : !viewer ? (
+                <p className="text-sm text-muted">
+                  <Link href={`/login?next=/business/${p.slug}`} className="font-medium text-brand-600 hover:text-brand-700">
+                    Sign in
+                  </Link>{" "}
+                  to write a review.
+                </p>
+              ) : alreadyReviewed ? (
+                <p className="text-sm text-muted">Thanks — you&apos;ve already reviewed this business.</p>
+              ) : (
+                <ReviewForm providerId={p.id} providerName={p.name} />
+              )}
+            </div>
+
             <ul className="mt-6 divide-y divide-line">
               {p.reviews.map((r) => (
                 <li key={r.id} className="py-4">
@@ -234,8 +260,17 @@ export default async function ProviderPage({ params }: { params: PP }) {
                   </div>
                   <p className="mt-2 text-sm font-semibold text-ink">{r.title}</p>
                   <p className="mt-0.5 text-sm text-muted">{r.body}</p>
+                  {r.providerReply && (
+                    <div className="mt-2 rounded-lg border-l-2 border-brand-300 bg-canvas p-3">
+                      <p className="text-xs font-semibold text-ink">Response from {p.name}</p>
+                      <p className="mt-0.5 text-sm text-muted">{r.providerReply}</p>
+                    </div>
+                  )}
                 </li>
               ))}
+              {p.reviews.length === 0 && (
+                <li className="py-6 text-sm text-muted">No reviews yet. Be the first to review {p.name}.</li>
+              )}
             </ul>
           </section>
         </div>

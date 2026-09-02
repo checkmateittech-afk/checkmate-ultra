@@ -138,7 +138,7 @@ export async function getProvider(slug: string) {
       locality: true,
       photos: { orderBy: { sortOrder: "asc" } },
       services: { include: { category: true } },
-      reviews: { orderBy: { createdAt: "desc" } },
+      reviews: { where: { status: "PUBLISHED" }, orderBy: { createdAt: "desc" } },
     },
   });
 }
@@ -177,6 +177,63 @@ export async function providerDashboardStats(providerId: string) {
     }),
   ]);
   return { total, fresh, won, provider };
+}
+
+export async function getOwnerReviews(providerId: string) {
+  return db.review.findMany({
+    where: { providerId },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+// ---------- admin ----------
+
+export async function adminCounts() {
+  const [providersPending, kycPending, reviewsTotal, reviewsHidden, users, leadsToday] =
+    await Promise.all([
+      db.provider.count({ where: { status: "PENDING" } }),
+      db.provider.count({ where: { kycStatus: "SUBMITTED" } }),
+      db.review.count(),
+      db.review.count({ where: { status: "HIDDEN" } }),
+      db.user.count(),
+      db.leadRequest.count({ where: { createdAt: { gte: new Date(Date.now() - 86400000) } } }),
+    ]);
+  return { providersPending, kycPending, reviewsTotal, reviewsHidden, users, leadsToday };
+}
+
+export async function adminListProviders(opts: { status?: string; kyc?: string } = {}) {
+  return db.provider.findMany({
+    where: {
+      status: opts.status || undefined,
+      kycStatus: opts.kyc || undefined,
+    },
+    orderBy: [{ kycStatus: "asc" }, { createdAt: "desc" }],
+    take: 100,
+    include: {
+      city: { select: { name: true } },
+      locality: { select: { name: true } },
+      services: { select: { category: { select: { name: true } } } },
+      kycSubmissions: { orderBy: { createdAt: "desc" }, take: 1 },
+      owner: { select: { phone: true, name: true } },
+    },
+  });
+}
+
+export async function adminListReviews(status?: string) {
+  return db.review.findMany({
+    where: status ? { status } : undefined,
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    include: { provider: { select: { name: true, slug: true } } },
+  });
+}
+
+export async function adminRecentLeads() {
+  return db.leadRequest.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 60,
+    include: { _count: { select: { leads: true } } },
+  });
 }
 
 export function ratingBreakdown(reviews: { rating: number }[]) {
