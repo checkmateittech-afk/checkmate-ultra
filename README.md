@@ -50,7 +50,7 @@ npm run dev           # http://localhost:3000
 - API route handlers: `GET /api/providers`, `POST /api/leads` (+ `GET /api/leads`)
 - City selection persisted in a cookie (`ck_city`)
 
-Billing and the matching/credit engine are later modules.
+Real payments (Razorpay), notifications and photo uploads are later modules.
 
 ## What module 2 covers — Auth
 
@@ -97,6 +97,28 @@ Billing and the matching/credit engine are later modules.
 - API: `POST /api/reviews`, `POST /api/dashboard/reviews/[id]/reply`,
   `PATCH /api/admin/providers/[id]`, `PATCH /api/admin/reviews/[id]`.
 - Sign in as the seeded admin (`+91 90000 00001`) to reach `/admin`.
+
+## What module 5 covers — Wallet & lead-credit engine
+
+- Models: `Wallet` + append-only `WalletTransaction` ledger (signed amounts,
+  `balanceAfter`), `Plan`, `Subscription`; `Category.leadPrice`,
+  `Provider.tier/rankBoost`, `Lead.creditCost/chargedAt`.
+- `lib/wallet.ts` — `applyLedger()` credits/debits inside one transaction and
+  refuses to go negative; credit packs (100 / 500 / 2000), welcome bonus (50).
+- `lib/leads.ts` rewritten: category+city enquiries fan out to the top‑ranked
+  matching providers **that can afford the lead** (rankBoost → verified → rating),
+  charging each wallet the category price minus the plan discount, capped at
+  3 providers and a daily lead cap. Direct profile enquiries stay free.
+- `/dashboard/wallet` — balance, lifetime spent, current plan, one‑tap top‑ups,
+  plan switch (STARTER / PRO grant monthly credits + a per‑lead discount +
+  ranking boost), full transaction history. Payments are **simulated** here.
+- Dashboard overview shows the credit balance + a low‑balance warning; the leads
+  inbox shows each lead's credit cost.
+- Admin `/admin/providers` shows each provider's tier + balance and can grant
+  `+100` credits (`POST /api/admin/providers/[id]/credits`).
+- Search "recommended" order now also respects `rankBoost` (paid tiers rank higher).
+- API: `POST /api/dashboard/wallet/topup`, `POST /api/dashboard/wallet/plan`,
+  `POST /api/admin/providers/[id]/credits`.
 
 ## Moving to Postgres (later)
 

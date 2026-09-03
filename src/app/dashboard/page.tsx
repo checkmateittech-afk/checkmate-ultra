@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Inbox, Sparkle, Trophy, Star, ArrowRight, ShieldCheck, ShieldAlert } from "lucide-react";
+import { Inbox, Sparkle, Star, Wallet, ArrowRight, ShieldCheck, ShieldAlert } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getOwnedProvider, getProviderLeads, providerDashboardStats } from "@/lib/queries";
 import { timeAgo } from "@/lib/utils";
@@ -53,10 +53,31 @@ export default async function DashboardOverview() {
         </div>
       )}
 
+      {stats.balance < 30 && (
+        <div className="flex flex-col gap-3 rounded-xl border border-brand-200 bg-brand-50 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <Wallet className="mt-0.5 shrink-0 text-brand-600" size={20} />
+            <div>
+              <p className="text-sm font-semibold text-brand-800">Low on credits</p>
+              <p className="text-sm text-brand-700">
+                You have {stats.balance} credits. Providers run out of new leads when their balance
+                can&apos;t cover the next lead.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/dashboard/wallet"
+            className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600"
+          >
+            Add credits <ArrowRight size={14} />
+          </Link>
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Stat icon={Wallet} label="Credit balance" value={stats.balance} accent={stats.balance < 30} />
         <Stat icon={Inbox} label="Total leads" value={stats.total} />
-        <Stat icon={Sparkle} label="New leads" value={stats.fresh} accent />
-        <Stat icon={Trophy} label="Won" value={stats.won} />
+        <Stat icon={Sparkle} label="New leads" value={stats.fresh} />
         <Stat
           icon={Star}
           label="Rating"

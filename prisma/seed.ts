@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { PLANS } from "../src/lib/plans";
 
 const db = new PrismaClient();
 
@@ -17,18 +18,18 @@ const pick = <T,>(arr: T[]) => arr[Math.floor(rnd() * arr.length)];
 const between = (min: number, max: number) => Math.floor(rnd() * (max - min + 1)) + min;
 
 const CATEGORIES = [
-  { slug: "packers-and-movers", name: "Packers & Movers", icon: "Truck", blurb: "Home & office relocation, local and intercity." },
-  { slug: "home-cleaning", name: "Home Cleaning", icon: "Sparkles", blurb: "Deep cleaning, kitchen, bathroom and sofa care." },
-  { slug: "electricians", name: "Electricians", icon: "Plug", blurb: "Wiring, repairs, fittings and inverter setup." },
-  { slug: "plumbers", name: "Plumbers", icon: "Wrench", blurb: "Leak fixes, taps, tanks and bathroom fittings." },
-  { slug: "painters", name: "Painters", icon: "PaintRoller", blurb: "Interior, exterior, texture and waterproofing." },
-  { slug: "pest-control", name: "Pest Control", icon: "Bug", blurb: "Cockroach, termite, bed bug and mosquito control." },
-  { slug: "ac-service", name: "AC Service & Repair", icon: "Wind", blurb: "Servicing, gas refill, installation and uninstallation." },
-  { slug: "interior-designers", name: "Interior Designers", icon: "Ruler", blurb: "Full-home interiors, modular kitchens and wardrobes." },
-  { slug: "home-tutors", name: "Home Tutors", icon: "GraduationCap", blurb: "CBSE, ICSE and State board tuition, all subjects." },
-  { slug: "yoga-classes", name: "Yoga Classes", icon: "Activity", blurb: "Personal and group sessions, therapy and prenatal." },
-  { slug: "wedding-photographers", name: "Wedding Photographers", icon: "Camera", blurb: "Candid, traditional, pre-wedding and video teams." },
-  { slug: "event-caterers", name: "Event Caterers", icon: "UtensilsCrossed", blurb: "Weddings, parties and corporate — veg & non-veg." },
+  { slug: "packers-and-movers", name: "Packers & Movers", icon: "Truck", blurb: "Home & office relocation, local and intercity.", leadPrice: 40 },
+  { slug: "home-cleaning", name: "Home Cleaning", icon: "Sparkles", blurb: "Deep cleaning, kitchen, bathroom and sofa care.", leadPrice: 20 },
+  { slug: "electricians", name: "Electricians", icon: "Plug", blurb: "Wiring, repairs, fittings and inverter setup.", leadPrice: 15 },
+  { slug: "plumbers", name: "Plumbers", icon: "Wrench", blurb: "Leak fixes, taps, tanks and bathroom fittings.", leadPrice: 15 },
+  { slug: "painters", name: "Painters", icon: "PaintRoller", blurb: "Interior, exterior, texture and waterproofing.", leadPrice: 30 },
+  { slug: "pest-control", name: "Pest Control", icon: "Bug", blurb: "Cockroach, termite, bed bug and mosquito control.", leadPrice: 20 },
+  { slug: "ac-service", name: "AC Service & Repair", icon: "Wind", blurb: "Servicing, gas refill, installation and uninstallation.", leadPrice: 18 },
+  { slug: "interior-designers", name: "Interior Designers", icon: "Ruler", blurb: "Full-home interiors, modular kitchens and wardrobes.", leadPrice: 80 },
+  { slug: "home-tutors", name: "Home Tutors", icon: "GraduationCap", blurb: "CBSE, ICSE and State board tuition, all subjects.", leadPrice: 15 },
+  { slug: "yoga-classes", name: "Yoga Classes", icon: "Activity", blurb: "Personal and group sessions, therapy and prenatal.", leadPrice: 15 },
+  { slug: "wedding-photographers", name: "Wedding Photographers", icon: "Camera", blurb: "Candid, traditional, pre-wedding and video teams.", leadPrice: 60 },
+  { slug: "event-caterers", name: "Event Caterers", icon: "UtensilsCrossed", blurb: "Weddings, parties and corporate — veg & non-veg.", leadPrice: 45 },
 ];
 
 const CITIES = [
@@ -92,16 +93,27 @@ const ABOUT = (cat: string, city: string) =>
 
 async function main() {
   console.log("Clearing existing data…");
+  await db.walletTransaction.deleteMany();
+  await db.wallet.deleteMany();
+  await db.subscription.deleteMany();
+  await db.lead.deleteMany();
   await db.review.deleteMany();
   await db.providerPhoto.deleteMany();
   await db.providerService.deleteMany();
+  await db.kycSubmission.deleteMany();
   await db.leadRequest.deleteMany();
   await db.provider.deleteMany();
   await db.locality.deleteMany();
   await db.city.deleteMany();
   await db.category.deleteMany();
+  await db.plan.deleteMany();
   await db.otpChallenge.deleteMany();
   await db.user.deleteMany();
+
+  console.log("Seeding plans…");
+  for (const p of PLANS) {
+    await db.plan.create({ data: { ...p } });
+  }
 
   console.log("Seeding categories…");
   const categoryRows = [];
@@ -155,8 +167,14 @@ async function main() {
         // 60% single-category providers, 40% also offer one adjacent category
         const extra = rnd() < 0.4 ? pick(categoryRows.filter((c) => c.id !== category.id)) : null;
         const isVerified = rnd() < 0.6;
+        const tierRoll = rnd();
+        const tier = tierRoll > 0.92 ? "PRO" : tierRoll > 0.78 ? "STARTER" : "FREE";
+        const rankBoost = tier === "PRO" ? 2 : tier === "STARTER" ? 1 : 0;
+        // ~20% of free providers have an empty wallet (won't receive fan-out leads).
+        const startBalance =
+          tier === "PRO" ? between(500, 1200) : tier === "STARTER" ? between(150, 600) : rnd() < 0.2 ? 0 : between(15, 250);
 
-        await db.provider.create({
+        const provider = await db.provider.create({
           data: {
             slug,
             name,
@@ -166,6 +184,8 @@ async function main() {
             verified: isVerified,
             status: "ACTIVE",
             kycStatus: isVerified ? "VERIFIED" : "UNVERIFIED",
+            tier,
+            rankBoost,
             yearsInBusiness: between(1, 18),
             ratingAvg,
             ratingCount: nReviews,
@@ -196,6 +216,28 @@ async function main() {
             },
           },
         });
+
+        const wallet = await db.wallet.create({
+          data: { providerId: provider.id, balance: startBalance },
+        });
+        if (startBalance > 0) {
+          await db.walletTransaction.create({
+            data: {
+              walletId: wallet.id,
+              type: tier === "FREE" ? "TOPUP" : "PLAN_GRANT",
+              amount: startBalance,
+              balanceAfter: startBalance,
+              note: tier === "FREE" ? "Initial top-up" : `${tier} plan monthly credits`,
+            },
+          });
+        }
+        if (tier !== "FREE") {
+          const end = new Date();
+          end.setMonth(end.getMonth() + 1);
+          await db.subscription.create({
+            data: { providerId: provider.id, planSlug: tier, currentPeriodEnd: end },
+          });
+        }
       }
     }
   }

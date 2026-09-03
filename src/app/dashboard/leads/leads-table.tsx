@@ -8,6 +8,7 @@ type Lead = {
   id: string;
   status: string;
   note: string | null;
+  creditCost: number;
   createdAt: string;
   name: string;
   phone: string;
@@ -82,9 +83,14 @@ export function LeadsTable({ leads: initial }: { leads: Lead[] }) {
                   {timeAgo(new Date(l.createdAt))}
                 </p>
               </div>
-              <span className={`rounded-full px-2 py-1 text-xs font-medium ${STATUS_STYLE[l.status] ?? "bg-canvas text-muted"}`}>
-                {l.status}
-              </span>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="rounded-full bg-canvas px-2 py-1 text-xs font-medium text-muted">
+                  {l.creditCost > 0 ? `${l.creditCost} credits` : "Free"}
+                </span>
+                <span className={`rounded-full px-2 py-1 text-xs font-medium ${STATUS_STYLE[l.status] ?? "bg-canvas text-muted"}`}>
+                  {l.status}
+                </span>
+              </div>
             </div>
 
             <p className="mt-2 flex items-start gap-2 text-sm text-ink">

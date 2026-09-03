@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCurrentUser, setSessionCookie, type Role } from "@/lib/auth";
 import { providerOnboardingSchema, providerProfileSchema } from "@/lib/validation";
 import { seedSampleLeads } from "@/lib/leads";
+import { applyLedger, WELCOME_BONUS } from "@/lib/wallet";
 import { slugify } from "@/lib/utils";
 
 async function uniqueSlug(base: string) {
@@ -68,6 +69,11 @@ export async function POST(req: Request) {
   await db.user.update({ where: { id: user.id }, data: { role: "PROVIDER_OWNER" } });
   await setSessionCookie({ id: user.id, role: "PROVIDER_OWNER" as Role, name: user.name, phone: user.phone });
 
+  await db.wallet.create({ data: { providerId: provider.id, balance: 0 } });
+  await applyLedger(provider.id, WELCOME_BONUS, {
+    type: "BONUS",
+    note: "Welcome bonus — credits to receive your first leads",
+  });
   await seedSampleLeads(provider.id, category.slug, city.slug);
 
   return NextResponse.json({ ok: true, slug: provider.slug }, { status: 201 });

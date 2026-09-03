@@ -19,6 +19,7 @@ model Category {
   icon      String            // lucide icon key, see src/lib/catalog.ts
   blurb     String
   sortOrder Int               @default(0)
+  leadPrice Int               @default(20) // credits charged per delivered fan-out lead
   services  ProviderService[]
   createdAt DateTime          @default(now())
 }
@@ -56,6 +57,8 @@ model Provider {
   verified        Boolean           @default(false)
   status          String            @default("PENDING")
   kycStatus       String            @default("UNVERIFIED")
+  tier            String            @default("FREE") // FREE | STARTER | PRO (mirrors Subscription)
+  rankBoost       Int               @default(0) // search / distribution ranking bump from tier
   yearsInBusiness Int               @default(1)
   ratingAvg       Float             @default(0)
   ratingCount     Int               @default(0)
@@ -71,11 +74,63 @@ model Provider {
   photos          ProviderPhoto[]
   leads           Lead[]
   kycSubmissions  KycSubmission[]
+  wallet          Wallet?
+  subscription    Subscription?
   createdAt       DateTime          @default(now())
 
   @@index([cityId])
   @@index([localityId])
   @@index([status])
+}
+
+model Wallet {
+  id           String              @id @default(cuid())
+  providerId   String              @unique
+  provider     Provider            @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  balance      Int                 @default(0) // credits
+  lifetimeSpent Int                @default(0)
+  transactions WalletTransaction[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+/// type: TOPUP | LEAD_CHARGE | REFUND | BONUS | PLAN_GRANT | ADJUSTMENT
+/// amount is signed: positive = credit, negative = debit. Append-only ledger.
+model WalletTransaction {
+  id           String   @id @default(cuid())
+  walletId     String
+  wallet       Wallet   @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type         String
+  amount       Int
+  balanceAfter Int
+  refType      String?
+  refId        String?
+  note         String?
+  createdAt    DateTime @default(now())
+
+  @@index([walletId, createdAt])
+}
+
+model Plan {
+  slug           String   @id
+  name           String
+  priceInr       Int
+  monthlyCredits Int
+  leadDiscountPct Int     @default(0)
+  rankBoost      Int      @default(0)
+  features       String   // newline-separated bullet points
+  sortOrder      Int      @default(0)
+}
+
+model Subscription {
+  id               String   @id @default(cuid())
+  providerId       String   @unique
+  provider         Provider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  planSlug         String
+  status           String   @default("ACTIVE") // ACTIVE | CANCELLED
+  currentPeriodEnd DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
 
 model KycSubmission {
@@ -102,11 +157,14 @@ model Lead {
   provider      Provider    @relation(fields: [providerId], references: [id], onDelete: Cascade)
   status        String      @default("NEW")
   note          String?
+  creditCost    Int         @default(0)
+  chargedAt     DateTime?
   viewedAt      DateTime?
   createdAt     DateTime    @default(now())
 
   @@unique([leadRequestId, providerId])
   @@index([providerId, status])
+  @@index([providerId, createdAt])
 }
 
 model ProviderService {

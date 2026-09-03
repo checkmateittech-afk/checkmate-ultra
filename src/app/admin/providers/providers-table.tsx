@@ -12,6 +12,8 @@ type Row = {
   status: string;
   kycStatus: string;
   verified: boolean;
+  tier: string;
+  balance: number;
   city: string;
   locality: string;
   category: string;
@@ -67,6 +69,24 @@ export function ProvidersTable({
     }
   }
 
+  async function grant(id: string, amount: number) {
+    setBusyId(id);
+    try {
+      const res = await fetch(`/api/admin/providers/${id}/credits`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRows((rs) => rs.map((r) => (r.id === id ? { ...r, balance: data.balance } : r)));
+        router.refresh();
+      }
+    } finally {
+      setBusyId(null);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-1.5">
@@ -112,9 +132,11 @@ export function ProvidersTable({
                     {r.ownerPhone ? ` · owner ${r.ownerPhone}` : ""}
                   </p>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs">
+                <div className="flex flex-wrap items-center gap-1.5 text-xs">
                   <span className="rounded-full bg-canvas px-2 py-0.5 text-muted">status: {r.status}</span>
                   <span className="rounded-full bg-canvas px-2 py-0.5 text-muted">kyc: {r.kycStatus}</span>
+                  <span className="rounded-full bg-canvas px-2 py-0.5 text-muted">{r.tier}</span>
+                  <span className="rounded-full bg-canvas px-2 py-0.5 font-medium text-ink">{r.balance} cr</span>
                 </div>
               </div>
 
@@ -160,6 +182,13 @@ export function ProvidersTable({
                     Reactivate
                   </button>
                 )}
+                <button
+                  onClick={() => grant(r.id, 100)}
+                  disabled={busyId === r.id}
+                  className="rounded-lg border border-line px-3 py-1.5 text-xs font-semibold text-ink hover:bg-canvas"
+                >
+                  +100 credits
+                </button>
                 {busyId === r.id && <Loader2 size={14} className="animate-spin text-muted" />}
               </div>
             </li>

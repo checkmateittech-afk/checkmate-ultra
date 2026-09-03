@@ -30,6 +30,8 @@ export default async function AdminProviders({
           status: p.status,
           kycStatus: p.kycStatus,
           verified: p.verified,
+          tier: p.tier,
+          balance: p.wallet?.balance ?? 0,
           city: p.city.name,
           locality: p.locality.name,
           category: p.services[0]?.category.name ?? "—",

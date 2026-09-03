@@ -84,7 +84,12 @@ function orderBy(sort: SortValue | undefined): Prisma.ProviderOrderByWithRelatio
     case "newest":
       return [{ createdAt: "desc" }];
     default:
-      return [{ verified: "desc" }, { ratingAvg: "desc" }, { ratingCount: "desc" }];
+      return [
+        { rankBoost: "desc" },
+        { verified: "desc" },
+        { ratingAvg: "desc" },
+        { ratingCount: "desc" },
+      ];
   }
 }
 
@@ -167,16 +172,17 @@ export async function getProviderLeads(providerId: string) {
 }
 
 export async function providerDashboardStats(providerId: string) {
-  const [total, fresh, won, provider] = await Promise.all([
+  const [total, fresh, won, provider, wallet] = await Promise.all([
     db.lead.count({ where: { providerId } }),
     db.lead.count({ where: { providerId, status: "NEW" } }),
     db.lead.count({ where: { providerId, status: "WON" } }),
     db.provider.findUnique({
       where: { id: providerId },
-      select: { ratingAvg: true, ratingCount: true, status: true, kycStatus: true, verified: true },
+      select: { ratingAvg: true, ratingCount: true, status: true, kycStatus: true, verified: true, tier: true },
     }),
+    db.wallet.findUnique({ where: { providerId }, select: { balance: true } }),
   ]);
-  return { total, fresh, won, provider };
+  return { total, fresh, won, provider, balance: wallet?.balance ?? 0 };
 }
 
 export async function getOwnerReviews(providerId: string) {
@@ -215,6 +221,7 @@ export async function adminListProviders(opts: { status?: string; kyc?: string }
       services: { select: { category: { select: { name: true } } } },
       kycSubmissions: { orderBy: { createdAt: "desc" }, take: 1 },
       owner: { select: { phone: true, name: true } },
+      wallet: { select: { balance: true } },
     },
   });
 }

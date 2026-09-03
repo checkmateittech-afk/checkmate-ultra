@@ -24,6 +24,7 @@ export default async function DashboardLeads() {
           id: l.id,
           status: l.status,
           note: l.note,
+          creditCost: l.creditCost,
           createdAt: l.createdAt.toISOString(),
           name: l.leadRequest.name,
           phone: l.leadRequest.phone,
