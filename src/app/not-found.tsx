@@ -3,7 +3,7 @@ import { buttonVariants } from "@/components/ui/button";
 
 export default function NotFound() {
   return (
-    <div className="container-page flex flex-col items-center justify-center py-24 text-center">
+    <div className="container-page flex min-h-screen flex-col items-center justify-center bg-canvas py-24 text-center">
       <p className="text-5xl font-extrabold text-brand-500">404</p>
       <h1 className="mt-3 text-xl font-bold text-ink">We couldn&apos;t find that page</h1>
       <p className="mt-2 max-w-md text-sm text-muted">

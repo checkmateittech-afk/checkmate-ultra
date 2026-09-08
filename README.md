@@ -120,6 +120,38 @@ Real payments (Razorpay), notifications and photo uploads are later modules.
 - API: `POST /api/dashboard/wallet/topup`, `POST /api/dashboard/wallet/plan`,
   `POST /api/admin/providers/[id]/credits`.
 
+## What module 6 covers — Super‑admin console
+
+- `/admin` is now a **standalone app**: consumer site chrome removed (routes split
+  into a `(site)` route group with its own layout; `/dashboard` gets its own
+  "for business" top bar).
+- Left sidebar grouped Overview / Marketplace / System, live KYC + hidden‑review
+  badges, mobile drawer, identity + sign‑out.
+- **Dashboard** — 8 KPI tiles (providers, verified %, users, leads 24h/7d/all,
+  credits in circulation, credits sold, subscription MRR, reviews), a "Needs
+  attention" queue grid, inline SVG charts (enquiries 14d, signups & new providers
+  8w), provider mix bars, top categories / top providers / highest‑rated / cities,
+  and a merged recent‑activity feed.
+- **Providers** — search + status/KYC/plan/sort filters, richer table (plan,
+  balance, rating, leads), expandable per‑row actions (approve/reject KYC,
+  suspend/reactivate, ± credit adjustment).
+- **Users** (new) — search + role/status filters, role change, suspend/restore,
+  linked business, lead/review counts. `PATCH /api/admin/users/[id]` (role changes
+  admin‑only; moderators can't touch staff accounts; can't edit self).
+- **Leads** — search + category/city/source filters, per‑enquiry delivery
+  breakdown with provider + credit cost.
+- **Reviews** — search + status/rating filters, hide/publish.
+- **Finance** (new) — credit totals (in circulation / sold / granted / spent /
+  refunds), by‑type breakdown, highest & lowest wallet balances, full transaction
+  ledger with a type filter.
+- **Catalog** (new) — edit per‑category lead price inline
+  (`PATCH /api/admin/categories/[id]`); cities with localities and an add‑locality
+  form (`POST /api/admin/localities`).
+- **Activity log** (new) — merged timeline (enquiries / reviews / KYC / signups /
+  credits) with a type filter.
+- Seed now backdates provider/user/lead history (~190 historical enquiries with a
+  coherent credit ledger) so charts and finance totals are populated.
+
 ## Moving to Postgres (later)
 
 1. `docker compose up -d`

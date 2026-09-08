@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, CheckCheck } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getOwnedProvider } from "@/lib/queries";
 import { DashboardNavLink } from "./nav-link";
+import { DashboardSignOut } from "./sign-out";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getCurrentUser();
@@ -13,8 +14,26 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!provider) redirect("/business/join");
 
   return (
-    <div className="container-page py-8">
-      <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
+    <div className="min-h-screen bg-canvas">
+      <header className="border-b border-line bg-surface">
+        <div className="container-page flex h-14 items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white">
+              <CheckCheck size={17} strokeWidth={2.5} />
+            </span>
+            <span className="font-extrabold text-ink">
+              checkmate <span className="font-medium text-muted">for business</span>
+            </span>
+          </Link>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="hidden text-muted sm:block">{user.name ?? user.phone}</span>
+            <DashboardSignOut />
+          </div>
+        </div>
+      </header>
+
+      <div className="container-page py-8">
+        <div className="grid gap-8 lg:grid-cols-[220px_1fr]">
         <aside>
           <div className="rounded-xl border border-line bg-surface p-4">
             <p className="truncate text-sm font-bold text-ink">{provider.name}</p>
@@ -60,7 +79,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </nav>
         </aside>
 
-        <div className="min-w-0">{children}</div>
+          <div className="min-w-0">{children}</div>
+        </div>
       </div>
     </div>
   );

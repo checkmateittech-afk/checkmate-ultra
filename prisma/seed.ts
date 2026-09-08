@@ -206,6 +206,7 @@ async function main() {
                   : []),
               ],
             },
+            createdAt: new Date(Date.now() - between(0, 75) * 86400000),
             reviews: { create: reviews },
             photos: {
               create: Array.from({ length: between(3, 5) }).map((_, i) => ({
@@ -250,9 +251,101 @@ async function main() {
       { phone: "+919888800001", name: "Anita Rao", role: "CONSUMER" },
     ],
   });
+  // Historical consumer signups spread over the last ~60 days (for admin charts).
+  const histUsers = Array.from({ length: 44 }).map((_, i) => ({
+    phone: `+9187${i.toString().padStart(4, "0")}${between(100000, 999999)}`,
+    name: `${pick(FIRST)} ${pick(LAST)}`,
+    role: "CONSUMER",
+    createdAt: new Date(Date.now() - between(0, 60) * 86400000),
+    lastLogin: rnd() < 0.5 ? new Date(Date.now() - between(0, 20) * 86400000) : null,
+  }));
+  await db.user.createMany({ data: histUsers });
+
+  console.log("Seeding historical enquiries…");
+  const allProviders = await db.provider.findMany({
+    where: { status: "ACTIVE" },
+    select: {
+      id: true,
+      tier: true,
+      services: { select: { category: { select: { slug: true } } } },
+      city: { select: { slug: true } },
+      wallet: { select: { id: true, balance: true } },
+    },
+  });
+  const catBySlug = Object.fromEntries(categoryRows.map((c) => [c.slug, c]));
+  const bal = new Map(allProviders.map((p) => [p.id, p.wallet?.balance ?? 0]));
+  const spent = new Map(allProviders.map((p) => [p.id, 0]));
+  const discountFor = (tier: string) => (tier === "PRO" ? 20 : tier === "STARTER" ? 10 : 0);
+
+  let histLeads = 0;
+  for (let i = 0; i < 190; i++) {
+    const cat = pick(categoryRows);
+    const city = pick(cityRows);
+    const when = new Date(Date.now() - between(0, 21) * 86400000 - between(0, 23) * 3600000);
+    const lr = await db.leadRequest.create({
+      data: {
+        name: `${pick(FIRST)} ${pick(LAST)}`,
+        phone: `+91 ${between(70, 99)}${between(10000000, 99999999)}`,
+        message: pick([
+          `Looking for ${cat.name.toLowerCase()} in ${city.name}. Please share a quote.`,
+          `Need ${cat.name.toLowerCase()} this week. What are your charges?`,
+          `Requirement for ${cat.name.toLowerCase()} — 2BHK, ${city.name}.`,
+          `Urgent ${cat.name.toLowerCase()} needed. Are you available?`,
+        ]),
+        categorySlug: cat.slug,
+        citySlug: city.slug,
+        source: "web",
+        status: "NEW",
+        createdAt: when,
+      },
+    });
+    histLeads++;
+
+    const matches = allProviders
+      .filter((p) => p.city.slug === city.slug && p.services.some((s) => s.category.slug === cat.slug))
+      .slice(0, between(0, 3));
+    for (const m of matches) {
+      const cost = Math.max(1, Math.round(catBySlug[cat.slug].leadPrice * (1 - discountFor(m.tier) / 100)));
+      const current = bal.get(m.id) ?? 0;
+      if (!m.wallet || current < cost) continue;
+      const after = current - cost;
+      bal.set(m.id, after);
+      spent.set(m.id, (spent.get(m.id) ?? 0) + cost);
+      await db.lead.create({
+        data: {
+          leadRequestId: lr.id,
+          providerId: m.id,
+          creditCost: cost,
+          chargedAt: when,
+          status: pick(["NEW", "VIEWED", "VIEWED", "CONTACTED", "CONTACTED", "WON", "LOST"]),
+          createdAt: when,
+        },
+      });
+      await db.walletTransaction.create({
+        data: {
+          walletId: m.wallet.id,
+          type: "LEAD_CHARGE",
+          amount: -cost,
+          balanceAfter: after,
+          refType: "lead_request",
+          refId: lr.id,
+          note: `Lead in ${cat.slug}`,
+          createdAt: when,
+        },
+      });
+    }
+  }
+  // Write back the running balances / lifetime spend.
+  for (const p of allProviders) {
+    if (!p.wallet) continue;
+    await db.wallet.update({
+      where: { id: p.wallet.id },
+      data: { balance: bal.get(p.id) ?? p.wallet.balance, lifetimeSpent: spent.get(p.id) ?? 0 },
+    });
+  }
 
   console.log(
-    `Done. ${categoryRows.length} categories, ${cityRows.length} cities, ${total} providers, 3 users.`,
+    `Done. ${categoryRows.length} categories, ${cityRows.length} cities, ${total} providers, ${histUsers.length + 3} users, ${histLeads} historical enquiries.`,
   );
   console.log("Dev login: use any 10-digit number; the OTP is printed here and shown on the login screen.");
 }
