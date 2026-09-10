@@ -11,12 +11,17 @@ export function EnquiryForm({
   categorySlug,
   citySlug,
   compact = false,
+  subject,
+  ctaLabel,
 }: {
   providerId?: string;
   providerName?: string;
   categorySlug?: string;
   citySlug?: string;
   compact?: boolean;
+  /** Overrides the intro copy and prefilled message — used by course pages. */
+  subject?: string;
+  ctaLabel?: string;
 }) {
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -61,10 +66,11 @@ export function EnquiryForm({
     return (
       <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-6 text-center">
         <CheckCircle2 className="text-emerald-600" size={32} />
-        <p className="font-semibold text-emerald-800">Requirement sent!</p>
+        <p className="font-semibold text-emerald-800">{subject ? "Enquiry sent!" : "Requirement sent!"}</p>
         <p className="text-sm text-emerald-700">
-          {providerName ? `${providerName} and other matching providers` : "Matching providers"} will
-          contact you shortly with quotes.
+          {subject
+            ? "Our team will get in touch shortly with batch dates and fees."
+            : `${providerName ? `${providerName} and other matching providers` : "Matching providers"} will contact you shortly with quotes.`}
         </p>
       </div>
     );
@@ -74,8 +80,17 @@ export function EnquiryForm({
     <form onSubmit={onSubmit} className="flex flex-col gap-3">
       {!compact && (
         <p className="text-sm text-muted">
-          Tell us what you need and get free quotes from{" "}
-          {providerName ? <span className="font-medium text-ink">{providerName}</span> : "verified local providers"}.
+          {subject ? (
+            <>
+              Ask about <span className="font-medium text-ink">{subject}</span> — batch dates, fees and
+              curriculum.
+            </>
+          ) : (
+            <>
+              Tell us what you need and get free quotes from{" "}
+              {providerName ? <span className="font-medium text-ink">{providerName}</span> : "verified local providers"}.
+            </>
+          )}
         </p>
       )}
       <Field label="Your name" error={errors.name}>
@@ -89,12 +104,16 @@ export function EnquiryForm({
           <Input name="email" placeholder="you@example.com" type="email" autoComplete="email" />
         </Field>
       </div>
-      <Field label="What do you need?" error={errors.message}>
+      <Field label={subject ? "Your question" : "What do you need?"} error={errors.message}>
         <Textarea
           name="message"
-          placeholder="Describe the job, timeline and location…"
+          placeholder={subject ? "I'd like to know the next batch date and fees…" : "Describe the job, timeline and location…"}
           defaultValue={
-            categorySlug ? `Looking for ${categorySlug.replace(/-/g, " ")}` + (citySlug ? ` in ${citySlug}.` : ".") : ""
+            subject
+              ? `I'm interested in ${subject}. Please share the upcoming batch dates and fees.`
+              : categorySlug
+                ? `Looking for ${categorySlug.replace(/-/g, " ")}` + (citySlug ? ` in ${citySlug}.` : ".")
+                : ""
           }
           required
         />
@@ -102,7 +121,7 @@ export function EnquiryForm({
       {state === "error" && <p className="text-sm text-red-600">{message}</p>}
       <Button type="submit" disabled={state === "loading"} className="w-full">
         {state === "loading" && <Loader2 size={16} className="animate-spin" />}
-        {state === "loading" ? "Sending…" : "Get free quotes"}
+        {state === "loading" ? "Sending…" : (ctaLabel ?? "Get free quotes")}
       </Button>
       <p className="text-center text-xs text-muted">
         By submitting you agree to be contacted by providers. No spam.

@@ -12,6 +12,8 @@ import {
   Wallet,
   Tags,
   Activity,
+  GraduationCap,
+  UsersRound,
   ShieldCheck,
   ExternalLink,
   LogOut,
@@ -22,11 +24,17 @@ import {
 import { cn } from "@/lib/utils";
 
 type Item = { href: string; label: string; icon: LucideIcon; badge?: number; exact?: boolean };
+type Group = { title: string; items: Item[]; roles?: string[] };
 
-const GROUPS: { title: string; items: Item[] }[] = [
-  { title: "Overview", items: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true }] },
+const GROUPS: Group[] = [
+  {
+    title: "Overview",
+    roles: ["ADMIN", "MODERATOR"],
+    items: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true }],
+  },
   {
     title: "Marketplace",
+    roles: ["ADMIN", "MODERATOR"],
     items: [
       { href: "/admin/providers", label: "Providers", icon: Store },
       { href: "/admin/users", label: "Users", icon: Users },
@@ -35,10 +43,16 @@ const GROUPS: { title: string; items: Item[] }[] = [
     ],
   },
   {
+    title: "Content",
+    items: [{ href: "/admin/courses", label: "Courses", icon: GraduationCap }],
+  },
+  {
     title: "System",
+    roles: ["ADMIN", "MODERATOR"],
     items: [
       { href: "/admin/finance", label: "Finance", icon: Wallet },
       { href: "/admin/catalog", label: "Catalog", icon: Tags },
+      { href: "/admin/team", label: "Team", icon: UsersRound },
       { href: "/admin/activity", label: "Activity log", icon: Activity },
     ],
   },
@@ -53,6 +67,7 @@ export function AdminSidebar({
   name: string;
   badges: { providers?: number; reviews?: number };
 }) {
+  const groups = GROUPS.filter((g) => !g.roles || g.roles.includes(role));
   const pathname = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -75,13 +90,15 @@ export function AdminSidebar({
       </Link>
 
       <div className="flex flex-1 flex-col gap-5">
-        {GROUPS.map((g) => (
+        {groups.map((g) => (
           <div key={g.title}>
             <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted">
               {g.title}
             </p>
             <div className="flex flex-col gap-0.5">
-              {g.items.map((it) => {
+              {g.items
+                .filter((it) => it.href !== "/admin/team" || role === "ADMIN")
+                .map((it) => {
                 const active = it.exact
                   ? pathname === it.href
                   : pathname === it.href || pathname.startsWith(it.href + "/");

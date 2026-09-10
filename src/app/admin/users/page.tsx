@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireFullStaff } from "@/lib/admin-guard";
 import { adminUsers } from "@/lib/admin";
 import { PageHeader, Panel } from "../_components/admin-ui";
 import { FilterBar } from "../_components/filter-bar";
@@ -13,6 +14,7 @@ export default async function AdminUsersPage({
 }: {
   searchParams: Promise<{ q?: string; role?: string; status?: string }>;
 }) {
+  await requireFullStaff();
   const sp = await searchParams;
   const { rows, summary } = await adminUsers(sp);
 

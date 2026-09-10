@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireFullStaff } from "@/lib/admin-guard";
 import Link from "next/link";
 import { adminActivity } from "@/lib/admin";
 import { timeAgo } from "@/lib/utils";
@@ -20,6 +21,7 @@ export default async function AdminActivityPage({
 }: {
   searchParams: Promise<{ kind?: string }>;
 }) {
+  await requireFullStaff();
   const { kind } = await searchParams;
   const rows = await adminActivity(kind);
 

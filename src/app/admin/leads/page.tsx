@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireFullStaff } from "@/lib/admin-guard";
 import { adminLeads } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { timeAgo } from "@/lib/utils";
@@ -12,6 +13,7 @@ export default async function AdminLeadsPage({
 }: {
   searchParams: Promise<{ q?: string; category?: string; city?: string; source?: string }>;
 }) {
+  await requireFullStaff();
   const sp = await searchParams;
   const [rows, categories, cities] = await Promise.all([
     adminLeads(sp),

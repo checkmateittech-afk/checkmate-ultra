@@ -39,6 +39,7 @@ export async function SiteFooter() {
         </FooterCol>
 
         <FooterCol title="Company">
+          <Link href="/courses" className="hover:text-brand-600">Courses &amp; training</Link>
           <Link href="/about" className="hover:text-brand-600">About Checkmate</Link>
           <Link href="/business/join" className="hover:text-brand-600">List your business</Link>
           <Link href="/get-quotes" className="hover:text-brand-600">Post a requirement</Link>

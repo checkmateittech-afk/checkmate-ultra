@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireFullStaff } from "@/lib/admin-guard";
 import Link from "next/link";
 import {
   Store,
@@ -27,6 +28,7 @@ const ACTIVITY_DOT: Record<string, string> = {
 };
 
 export default async function AdminDashboard() {
+  await requireFullStaff();
   const d = await adminDashboard();
 
   return (

@@ -36,8 +36,14 @@ export async function SiteHeader() {
 
         <nav className="ml-auto flex items-center gap-2">
           <Link
-            href="/business/join"
+            href="/courses"
             className="hidden rounded-lg px-3 py-2 text-sm font-medium text-ink hover:bg-canvas sm:block"
+          >
+            Courses
+          </Link>
+          <Link
+            href="/business/join"
+            className="hidden rounded-lg px-3 py-2 text-sm font-medium text-ink hover:bg-canvas lg:block"
           >
             List your business
           </Link>

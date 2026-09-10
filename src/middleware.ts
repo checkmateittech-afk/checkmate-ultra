@@ -7,7 +7,7 @@ const SESSION_COOKIE = "ck_session";
 const GUARDS: { prefix: string; roles?: string[] }[] = [
   { prefix: "/account" },
   { prefix: "/dashboard", roles: ["PROVIDER_OWNER", "PROVIDER_STAFF", "ADMIN"] },
-  { prefix: "/admin", roles: ["ADMIN", "MODERATOR"] },
+  { prefix: "/admin", roles: ["ADMIN", "MODERATOR", "EDITOR"] },
 ];
 
 function secret() {

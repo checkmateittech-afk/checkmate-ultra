@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireFullStaff } from "@/lib/admin-guard";
 import Link from "next/link";
 import { Wallet, TrendingUp, TrendingDown, Gift, Coins, RefreshCcw } from "lucide-react";
 import { adminFinance } from "@/lib/admin";
@@ -15,6 +16,7 @@ export default async function AdminFinancePage({
 }: {
   searchParams: Promise<{ type?: string }>;
 }) {
+  await requireFullStaff();
   const { type } = await searchParams;
   const f = await adminFinance(type);
 

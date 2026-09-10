@@ -78,3 +78,42 @@ export const adminProviderSchema = z.object({
 export const adminReviewSchema = z.object({
   status: z.enum(["PUBLISHED", "PENDING", "HIDDEN"]),
 });
+
+// ---------- Courses CMS ----------
+
+const faqItem = z.object({ q: z.string().trim().min(2).max(300), a: z.string().trim().min(2).max(2000) });
+
+export const courseSchema = z.object({
+  title: z.string().trim().min(4, "Give the course a title").max(160),
+  subtitle: z.string().trim().max(200).optional().or(z.literal("")),
+  categoryId: z.string().min(1, "Pick a category"),
+  summary: z.string().trim().min(20, "Write a short summary (20+ chars)").max(400),
+  overview: z.string().trim().min(40, "Write the overview (40+ chars)").max(20000),
+  mode: z.enum(["ONLINE", "CLASSROOM", "HYBRID"]).default("ONLINE"),
+  level: z.string().trim().max(40).optional().or(z.literal("")),
+  durationText: z.string().trim().max(80).optional().or(z.literal("")),
+  feeText: z.string().trim().max(80).optional().or(z.literal("")),
+  trainerName: z.string().trim().max(120).optional().or(z.literal("")),
+  highlights: z.string().max(4000).optional().or(z.literal("")),
+  curriculum: z.string().max(12000).optional().or(z.literal("")),
+  prerequisites: z.string().trim().max(2000).optional().or(z.literal("")),
+  audience: z.string().trim().max(2000).optional().or(z.literal("")),
+  faq: z.array(faqItem).max(20).optional(),
+  heroTint: z.string().regex(/^[0-9a-fA-F]{6}$/).optional(),
+  metaTitle: z.string().trim().max(70).optional().or(z.literal("")),
+  metaDescription: z.string().trim().max(180).optional().or(z.literal("")),
+  ogImageUrl: z.string().trim().url().optional().or(z.literal("")),
+  status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]).optional(),
+});
+export type CourseInput = z.infer<typeof courseSchema>;
+
+export const courseCategorySchema = z.object({
+  name: z.string().trim().min(2, "Enter a category name").max(80),
+  blurb: z.string().trim().max(200).optional().or(z.literal("")),
+});
+
+export const teamInviteSchema = z.object({
+  name: z.string().trim().min(2, "Enter a name").max(80),
+  phone: z.string().trim().min(8, "Enter a phone number").max(20),
+  role: z.enum(["EDITOR", "MODERATOR"]).default("EDITOR"),
+});

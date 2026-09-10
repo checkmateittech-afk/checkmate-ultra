@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireFullStaff } from "@/lib/admin-guard";
 import { adminCatalog } from "@/lib/admin";
 import { PageHeader, Panel } from "../_components/admin-ui";
 import { CategoryEditor } from "./category-editor";
@@ -7,6 +8,7 @@ import { LocalityManager } from "./locality-manager";
 export const metadata: Metadata = { title: "Admin · Catalog" };
 
 export default async function AdminCatalogPage() {
+  await requireFullStaff();
   const { categories, cities } = await adminCatalog();
 
   return (

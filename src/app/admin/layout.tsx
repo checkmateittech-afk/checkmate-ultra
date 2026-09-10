@@ -1,17 +1,17 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { requireAdminUser } from "@/lib/admin-guard";
 import { AdminSidebar } from "./_components/admin-sidebar";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const user = await getCurrentUser();
-  if (!user) redirect("/login?next=/admin");
-  if (user.role !== "ADMIN" && user.role !== "MODERATOR") redirect("/account");
+  const user = await requireAdminUser();
 
-  const [kycPending, reviewsHidden] = await Promise.all([
-    db.provider.count({ where: { kycStatus: "SUBMITTED" } }),
-    db.review.count({ where: { status: "HIDDEN" } }),
-  ]);
+  const isStaff = user.role === "ADMIN" || user.role === "MODERATOR";
+  const [kycPending, reviewsHidden] = isStaff
+    ? await Promise.all([
+        db.provider.count({ where: { kycStatus: "SUBMITTED" } }),
+        db.review.count({ where: { status: "HIDDEN" } }),
+      ])
+    : [0, 0];
 
   return (
     <div className="min-h-screen bg-canvas lg:flex">

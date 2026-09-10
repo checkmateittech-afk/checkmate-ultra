@@ -152,6 +152,35 @@ Real payments (Razorpay), notifications and photo uploads are later modules.
 - Seed now backdates provider/user/lead history (~190 historical enquiries with a
   coherent credit ledger) so charts and finance totals are populated.
 
+## What module 7 covers — Courses CMS + team
+
+- **New `EDITOR` role.** Editors reach `/admin` but only see the **Content →
+  Courses** section (other admin pages redirect them back). `requireFullStaff()` /
+  `requireSuperAdmin()` guards enforce this per page; middleware lets EDITOR into
+  `/admin/*`.
+- **Team** (`/admin/team`, admin only) — add a team member by name + mobile and a
+  role (Editor / Moderator); they sign in with the normal phone‑OTP. Change roles,
+  suspend/restore. `POST /api/admin/team`, reuses `PATCH /api/admin/users/[id]`.
+- **Courses admin** (`/admin/courses`) — list with status/category filters, a full
+  editor form (basics, overview, highlights, curriculum, audience, prerequisites,
+  dynamic FAQ, SEO meta, hero colour, details sidebar), draft/publish/archive,
+  per‑row actions. Editors can only edit their own courses; admins/mods edit all.
+  `POST /api/admin/courses`, `PATCH|DELETE /api/admin/courses/[id]`,
+  `POST /api/admin/course-categories`.
+- **Public pages** — `/courses` (hero + tracks nav + course cards grouped by
+  `CourseCategory`, `ItemList` schema) and `/courses/[slug]` (tinted hero, overview,
+  what‑you'll‑learn, numbered curriculum, audience/prerequisites, FAQ accordion,
+  sticky enquiry form + quick‑facts). Full SEO: `generateMetadata` (meta title/desc
+  with fallbacks, canonical, OpenGraph/Twitter), and JSON‑LD for **Course**
+  (+ `CourseInstance`, `Offer`, `provider` Organization), **BreadcrumbList** and
+  **FAQPage**. Draft courses are previewable by staff only, `noindex`.
+- **`sitemap.ts` + `robots.ts`** — sitemap covers home, `/courses`, every published
+  course and the category/city directory pages; robots disallows `/admin`,
+  `/dashboard`, `/account`, `/api/`. Set `NEXT_PUBLIC_SITE_URL` for production.
+- Models added: `Course`, `CourseCategory` (+ `User.courses`). Seed ships 6 tracks
+  and 8 published courses authored by the admin, plus an `EDITOR` user
+  (`+91 97777 00001`).
+
 ## Moving to Postgres (later)
 
 1. `docker compose up -d`

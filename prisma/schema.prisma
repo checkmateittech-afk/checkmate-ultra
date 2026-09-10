@@ -231,6 +231,7 @@ model LeadRequest {
 }
 
 /// Roles: CONSUMER | PROVIDER_OWNER | PROVIDER_STAFF | MODERATOR | ADMIN
+/// role: CONSUMER | PROVIDER_OWNER | PROVIDER_STAFF | EDITOR | MODERATOR | ADMIN
 model User {
   id        String   @id @default(cuid())
   phone     String   @unique
@@ -244,8 +245,54 @@ model User {
   leads    LeadRequest[]
   provider Provider?
   reviews  Review[]
+  courses  Course[]
 
   @@index([role])
+}
+
+model CourseCategory {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  name      String
+  blurb     String?
+  sortOrder Int      @default(0)
+  courses   Course[]
+  createdAt DateTime @default(now())
+}
+
+/// mode: ONLINE | CLASSROOM | HYBRID   status: DRAFT | PUBLISHED | ARCHIVED
+model Course {
+  id              String         @id @default(cuid())
+  slug            String         @unique
+  title           String
+  subtitle        String?
+  summary         String
+  overview        String
+  categoryId      String
+  category        CourseCategory @relation(fields: [categoryId], references: [id])
+  mode            String         @default("ONLINE")
+  level           String?
+  durationText    String?
+  feeText         String?
+  trainerName     String?
+  highlights      String         @default("")
+  curriculum      String         @default("")
+  prerequisites   String?
+  audience        String?
+  faqJson         String         @default("[]")
+  heroTint        String         @default("1f3a5f")
+  status          String         @default("DRAFT")
+  metaTitle       String?
+  metaDescription String?
+  ogImageUrl      String?
+  authorId        String
+  author          User           @relation(fields: [authorId], references: [id])
+  publishedAt     DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([status])
+  @@index([categoryId])
 }
 
 model OtpChallenge {
