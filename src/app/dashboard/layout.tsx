@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ExternalLink, CheckCheck } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { getOwnedProvider } from "@/lib/queries";
+import { getSiteSettings } from "@/lib/settings";
 import { DashboardNavLink } from "./nav-link";
 import { DashboardSignOut } from "./sign-out";
 
@@ -10,7 +11,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/dashboard");
 
-  const provider = await getOwnedProvider(user.id);
+  const [provider, settings] = await Promise.all([getOwnedProvider(user.id), getSiteSettings()]);
   if (!provider) redirect("/business/join");
 
   return (
@@ -18,11 +19,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <header className="border-b border-line bg-surface">
         <div className="container-page flex h-14 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white">
-              <CheckCheck size={17} strokeWidth={2.5} />
-            </span>
+            {settings.logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={settings.logoUrl} alt={settings.siteName} className="h-8 w-8 rounded-lg object-contain" />
+            ) : (
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500 text-white">
+                <CheckCheck size={17} strokeWidth={2.5} />
+              </span>
+            )}
             <span className="font-extrabold text-ink">
-              checkmate <span className="font-medium text-muted">for business</span>
+              {settings.siteName} <span className="font-medium text-muted">for business</span>
             </span>
           </Link>
           <div className="flex items-center gap-3 text-sm">

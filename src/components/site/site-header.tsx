@@ -2,27 +2,39 @@ import Link from "next/link";
 import { CheckCheck } from "lucide-react";
 import { listCities, resolveCitySlug } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
+import { getSiteSettings } from "@/lib/settings";
 import { CitySelect } from "./city-select";
 import { SearchBar } from "./search-bar";
 import { UserMenu } from "./user-menu";
 import { buttonVariants } from "@/components/ui/button";
 
 export async function SiteHeader() {
-  const [cities, city, session] = await Promise.all([
+  const [cities, city, session, settings] = await Promise.all([
     listCities(),
     resolveCitySlug(),
     getCurrentUser(),
+    getSiteSettings(),
   ]);
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-surface/95 backdrop-blur">
+      {settings.announcementActive && settings.announcementText && (
+        <div className="bg-navy-800 px-4 py-2 text-center text-xs font-medium text-white sm:text-sm">
+          {settings.announcementText}
+        </div>
+      )}
       <div className="container-page flex h-16 items-center gap-4">
         <Link href="/" className="flex shrink-0 items-center gap-2">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
-            <CheckCheck size={20} strokeWidth={2.5} />
-          </span>
+          {settings.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={settings.logoUrl} alt={settings.siteName} className="h-9 w-9 rounded-lg object-contain" />
+          ) : (
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
+              <CheckCheck size={20} strokeWidth={2.5} />
+            </span>
+          )}
           <span className="text-xl font-extrabold tracking-tight text-ink">
-            checkmate
+            {settings.siteName}
           </span>
         </Link>
 

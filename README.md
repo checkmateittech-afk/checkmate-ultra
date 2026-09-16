@@ -181,6 +181,30 @@ Real payments (Razorpay), notifications and photo uploads are later modules.
   and 8 published courses authored by the admin, plus an `EDITOR` user
   (`+91 97777 00001`).
 
+## What module 8 covers — Platform branding & settings
+
+- **`SiteSettings`** singleton (id `"singleton"`) holds logo/favicon URLs, site
+  name, tagline, support email/phone, a brand hex colour, and an announcement
+  banner. `src/lib/settings.ts` (`getSiteSettings()`, per-request cached) reads
+  it everywhere; `upsertSiteSettings()` writes it.
+- **`/admin/settings`** (admin only — `requireSuperAdmin()`): logo + favicon
+  upload with live preview/replace/remove, platform name + tagline, support
+  contact, a brand-colour picker (presets + hex), and an announcement banner
+  with live preview.
+- **Uploads** go through `POST/DELETE /api/admin/settings/logo?type=logo|favicon`
+  to `src/lib/upload.ts`, which validates type (PNG/JPG/WebP/SVG/ICO) and size
+  (≤2MB) and writes to `public/uploads/branding/` (gitignored — local disk only;
+  swap for R2/S3 before deploying anywhere serverless/ephemeral).
+- **Text/colour fields** save via `POST /api/admin/settings` (admin only).
+  `src/lib/color.ts` derives the brand‑50/100/500/600/700 ramp from one hex and
+  the root layout applies it as inline CSS variables on `<html>`, so a colour
+  change re‑themes buttons, links and accents everywhere without touching
+  Tailwind config.
+- Branding is now **live everywhere**: site header/footer, the provider
+  dashboard top bar, the admin sidebar, `<title>`/meta description, the
+  favicon, and the `Organization` entry in course `Course` JSON‑LD. The
+  announcement banner renders at the top of every public page when active.
+
 ## Moving to Postgres (later)
 
 1. `docker compose up -d`

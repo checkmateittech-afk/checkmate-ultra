@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { Clock, MonitorPlay, IndianRupee, BarChart3, UserRound, CheckCircle2, ChevronRight } from "lucide-react";
 import { getPublicCourse, parseFaq, toLines, MODE_LABEL } from "@/lib/courses";
 import { getCurrentUser } from "@/lib/auth";
-import { siteUrl, ORG_NAME } from "@/lib/seo";
+import { getSiteSettings } from "@/lib/settings";
+import { siteUrl } from "@/lib/seo";
 import { Breadcrumbs } from "@/components/site/breadcrumbs";
 import { EnquiryForm } from "@/components/site/enquiry-form";
 import { FaqAccordion } from "./faq-accordion";
@@ -53,6 +54,7 @@ export default async function CoursePage({ params }: { params: PP }) {
   const { slug } = await params;
   const { course, isPreview } = await load(slug);
   if (!course) notFound();
+  const settings = await getSiteSettings();
 
   const highlights = toLines(course.highlights);
   const curriculum = toLines(course.curriculum);
@@ -65,7 +67,12 @@ export default async function CoursePage({ params }: { params: PP }) {
     name: course.title,
     description: course.summary,
     url,
-    provider: { "@type": "Organization", name: ORG_NAME, url: siteUrl() },
+    provider: {
+      "@type": "Organization",
+      name: settings.siteName,
+      url: siteUrl(),
+      ...(settings.logoUrl ? { logo: siteUrl(settings.logoUrl) } : {}),
+    },
     ...(course.ogImageUrl ? { image: course.ogImageUrl } : {}),
     hasCourseInstance: {
       "@type": "CourseInstance",

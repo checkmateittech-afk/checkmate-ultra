@@ -117,3 +117,21 @@ export const teamInviteSchema = z.object({
   phone: z.string().trim().min(8, "Enter a phone number").max(20),
   role: z.enum(["EDITOR", "MODERATOR"]).default("EDITOR"),
 });
+
+// ---------- Site settings ----------
+
+export const siteSettingsSchema = z.object({
+  siteName: z.string().trim().min(2, "Enter a platform name").max(60).optional(),
+  tagline: z.string().trim().max(140).optional().or(z.literal("")),
+  supportEmail: z.union([z.string().trim().email("Enter a valid email"), z.literal("")]).optional(),
+  supportPhone: z.string().trim().max(20).optional().or(z.literal("")),
+  primaryColor: z
+    .string()
+    .trim()
+    .regex(/^#?[0-9a-fA-F]{6}$/, "Use a 6-digit hex color, e.g. F2620F")
+    .optional()
+    .or(z.literal("")),
+  announcementText: z.string().trim().max(200).optional().or(z.literal("")),
+  announcementActive: z.boolean().optional(),
+});
+export type SiteSettingsInput = z.infer<typeof siteSettingsSchema>;

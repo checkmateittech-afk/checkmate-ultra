@@ -308,3 +308,19 @@ model OtpChallenge {
 
   @@index([phone, createdAt])
 }
+
+/// Single row (id is always "singleton"). Platform-wide branding & controls, admin-editable.
+model SiteSettings {
+  id                 String   @id @default("singleton")
+  siteName           String   @default("Checkmate")
+  tagline            String?
+  logoUrl            String?
+  faviconUrl         String?
+  supportEmail       String?
+  supportPhone       String?
+  primaryColor       String? // hex, no '#'; re-themes the brand accent site-wide
+  announcementText   String?
+  announcementActive Boolean  @default(false)
+  updatedAt          DateTime @updatedAt
+  updatedById        String?
+}

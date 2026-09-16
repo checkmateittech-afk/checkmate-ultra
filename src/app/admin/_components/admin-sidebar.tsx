@@ -15,6 +15,7 @@ import {
   GraduationCap,
   UsersRound,
   ShieldCheck,
+  Settings,
   ExternalLink,
   LogOut,
   Menu,
@@ -54,18 +55,25 @@ const GROUPS: Group[] = [
       { href: "/admin/catalog", label: "Catalog", icon: Tags },
       { href: "/admin/team", label: "Team", icon: UsersRound },
       { href: "/admin/activity", label: "Activity log", icon: Activity },
+      { href: "/admin/settings", label: "Settings", icon: Settings },
     ],
   },
 ];
+
+const ADMIN_ONLY_HREFS = ["/admin/team", "/admin/settings"];
 
 export function AdminSidebar({
   role,
   name,
   badges,
+  logoUrl,
+  siteName,
 }: {
   role: string;
   name: string;
   badges: { providers?: number; reviews?: number };
+  logoUrl?: string | null;
+  siteName: string;
 }) {
   const groups = GROUPS.filter((g) => !g.roles || g.roles.includes(role));
   const pathname = usePathname();
@@ -81,11 +89,16 @@ export function AdminSidebar({
   const nav = (
     <nav className="flex h-full flex-col gap-6 p-4">
       <Link href="/admin" className="flex items-center gap-2" onClick={() => setOpen(false)}>
-        <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
-          <ShieldCheck size={18} strokeWidth={2.5} />
-        </span>
-        <span className="text-base font-extrabold text-ink">
-          checkmate <span className="text-muted">admin</span>
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt={siteName} className="h-9 w-9 rounded-lg object-contain" />
+        ) : (
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500 text-white">
+            <ShieldCheck size={18} strokeWidth={2.5} />
+          </span>
+        )}
+        <span className="truncate text-base font-extrabold text-ink">
+          {siteName} <span className="text-muted">admin</span>
         </span>
       </Link>
 
@@ -97,7 +110,7 @@ export function AdminSidebar({
             </p>
             <div className="flex flex-col gap-0.5">
               {g.items
-                .filter((it) => it.href !== "/admin/team" || role === "ADMIN")
+                .filter((it) => !ADMIN_ONLY_HREFS.includes(it.href) || role === "ADMIN")
                 .map((it) => {
                 const active = it.exact
                   ? pathname === it.href
